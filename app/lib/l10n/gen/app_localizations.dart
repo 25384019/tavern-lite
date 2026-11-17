@@ -39352,6 +39352,12 @@ abstract class L10n {
   /// **'每段对话用了多少 token、约多少钱'**
   String get tavernUsageStatsSubtitle;
 
+  /// No description provided for @tavernVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本'**
+  String get tavernVersion;
+
   /// No description provided for @tavernUsageAllNote.
   ///
   /// In zh, this message translates to:

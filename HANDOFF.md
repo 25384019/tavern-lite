@@ -620,3 +620,17 @@ flutter test integration_test/app_card_studio_test.dart -d <device>
 **没验的**：内置两份只在单测里断言了长度与关键词，没上真机跑过；
 主人自己的 NSFW 预设还没导进这台模拟器（DB 里只有「默认预设」「Codex test preset」「111」三条，
 后两条内容为空），要拿真预设校，得先在 资源库 › 预设 里导入。
+
+### 9.8 版本号 + 真机验收（2026-11-17 上午）
+
+- **工具链**：编这个项目要用 `E:\dshgo\sdk\flutter`（Flutter 3.50.0 / Dart 3.14.0）。
+  PATH 上的 `C:\tools\flutter` 是 3.44.8 / Dart 3.12.2，`pub get` 会在
+  `meta 1.18 vs record_use→meta 1.19` 那一步断掉，改 pubspec 约束也绕不过去。
+  `flutter analyze` / `flutter test` / `flutter build apk` 全部走 E 盘那套。
+- **版本号**：`lib/app_version.dart`（`appVersion` / `appBuildNumber` / `appVersionLabel`），
+  显示在「我的」最下面的「版本 → 1.0.16 (1)」，debug 包会多标 `· debug`；
+  `test/app_version_test.dart` 读 `pubspec.yaml` 盯着两边一致。
+- **真机验收**（雷电 emulator-5554，debug 包）：工坊的「类型」五项、工坊人格层切到
+  「内置 · 写书用」、制卡「生成设定」里的世界书开关与两档、专业创作顶部的
+  「我想要的角色」，四处都截图在 `docs/verify-*.png`。
+- **测试**：`flutter test` 全量 **195 例全过**；`flutter analyze` 0 error / 0 warning。

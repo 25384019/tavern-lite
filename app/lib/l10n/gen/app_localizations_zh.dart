@@ -21737,6 +21737,9 @@ class L10nZh extends L10n {
   String get tavernUsageStatsSubtitle => '每段对话用了多少 token、约多少钱';
 
   @override
+  String get tavernVersion => '版本';
+
+  @override
   String get tavernUsageAllNote => '所有对话当前线上的回复合计；换掉的备选不算';
 
   @override

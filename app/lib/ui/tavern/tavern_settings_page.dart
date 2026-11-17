@@ -4,9 +4,11 @@
 import 'dart:async';
 
 import 'package:dsh_tavern/dsh_tavern.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app_version.dart';
 import '../../l10n/l10n.dart';
 import '../../state/attachments.dart' show formatBytes;
 import '../../state/settings_state.dart';
@@ -411,7 +413,32 @@ List<Widget> tavernSettingsGroups(BuildContext context, WidgetRef ref) {
       ),
     ],
   );
-  return [model, generating, display, safety, data, you, startupGroup];
+  // 版本号：装的是哪一版，一眼能看见（debug 包会多标一个 debug）。
+  final aboutGroup = SheetGroup(
+    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+    children: [
+      SettingsTile(
+        key: const ValueKey('tavern-version'),
+        icon: AppIcons.info,
+        tinted: false,
+        title: l10n.tavernVersion,
+        value: Text(
+          kDebugMode ? '$appVersionLabel · debug' : appVersionLabel,
+        ),
+        chevron: false,
+      ),
+    ],
+  );
+  return [
+    model,
+    generating,
+    display,
+    safety,
+    data,
+    you,
+    startupGroup,
+    aboutGroup,
+  ];
 }
 
 /// What the room goes to, part by part.

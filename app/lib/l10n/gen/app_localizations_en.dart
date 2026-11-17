@@ -23973,6 +23973,9 @@ class L10nEn extends L10n {
       'How many tokens each chat has taken, and about what it cost';
 
   @override
+  String get tavernVersion => 'Version';
+
+  @override
   String get tavernUsageAllNote =>
       'Replies on every chat\'s current line, added up; replaced alternatives aren\'t counted';
 
