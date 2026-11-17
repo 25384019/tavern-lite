@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -12933,37 +12934,26 @@ class L10nEn extends L10n {
       'identity': 'The original run or channel no longer matches.',
       'invalid': 'The request or result could not be verified.',
       'display': 'The temporary display could not be verified.',
-      'input':
-          'Input acceptance or delivery was not confirmed. Sent input is not retried.',
+      'input': 'Input acceptance or delivery was not confirmed. Sent input is not retried.',
       'cleanup': 'Resource cleanup is unconfirmed. Retry only cleanup.',
       'denied': 'The system denied the operation.',
       'timeout': 'The operation timed out; sent work may still complete.',
       'unavailable': 'The local status or selected channel is unavailable.',
-      'target_unavailable':
-          'The fixed target could not be verified. Finish cleanup before starting again.',
+      'target_unavailable': 'The fixed target could not be verified. Finish cleanup before starting again.',
       'target_changed':
           'The original target changed. Continue only with cleanup.',
       'target_cleanup': 'Target cleanup is unconfirmed. Retry only cleanup.',
-      'target_main':
-          'The target was observed on MAIN. Further steps stopped; complete cleanup.',
-      'target_readback':
-          'The fixed target count or text did not match. Do not repeat the action; complete cleanup.',
+      'target_main': 'The target was observed on MAIN. Further steps stopped; complete cleanup.',
+      'target_readback': 'The fixed target count or text did not match. Do not repeat the action; complete cleanup.',
       'tree_cleanup':
           'Tree connection cleanup is unconfirmed. Retry only cleanup.',
-      'target_launch':
-          'Target launch was denied or unconfirmed. Check the device and complete cleanup.',
-      'frame_unavailable':
-          'No usable local pattern frame was observed. Complete cleanup before a new check.',
-      'frame_mismatch':
-          'The actual frame did not match this target and phase. Complete cleanup.',
-      'continuity':
-          'The limited controlled refresh sequence was not confirmed. This is not a frame-rate result.',
-      'main_changed':
-          'MAIN samples changed; this may include user actions. Complete cleanup. This does not establish the cause.',
-      'main_unchanged':
-          'No change was seen at these finite sampling points. Disturbance between them remains unknown.',
-      'main_incomplete':
-          'MAIN samples are incomplete. They cannot establish absence of disturbance.',
+      'target_launch': 'Target launch was denied or unconfirmed. Check the device and complete cleanup.',
+      'frame_unavailable': 'No usable local pattern frame was observed. Complete cleanup before a new check.',
+      'frame_mismatch': 'The actual frame did not match this target and phase. Complete cleanup.',
+      'continuity': 'The limited controlled refresh sequence was not confirmed. This is not a frame-rate result.',
+      'main_changed': 'MAIN samples changed; this may include user actions. Complete cleanup. This does not establish the cause.',
+      'main_unchanged': 'No change was seen at these finite sampling points. Disturbance between them remains unknown.',
+      'main_incomplete': 'MAIN samples are incomplete. They cannot establish absence of disturbance.',
       'not_installed':
           'This self-check does not include OCR. OCR was not tested.',
       'other': 'An unrecognized result was received.',
@@ -22160,8 +22150,7 @@ class L10nEn extends L10n {
       locale: localeName,
       other:
           'This card has $count more items you can\'t edit here (lorebook, extensions…). Saving keeps them as they are, and existing chats don\'t change.',
-      one:
-          'This card has 1 more item you can\'t edit here (lorebook, extensions…). Saving keeps it as it is, and existing chats don\'t change.',
+      one: 'This card has 1 more item you can\'t edit here (lorebook, extensions…). Saving keeps it as it is, and existing chats don\'t change.',
     );
     return '$_temp0';
   }
@@ -24780,8 +24769,7 @@ class L10nEn extends L10n {
       locale: localeName,
       other:
           'This card has $count scripts; they run only with Whole-page canvas (trial) on',
-      one:
-          'This card has a script; it runs only with Whole-page canvas (trial) on',
+      one: 'This card has a script; it runs only with Whole-page canvas (trial) on',
     );
     return '$_temp0';
   }

@@ -85,7 +85,7 @@ void main() {
       expect(card.length, greaterThan(200));
       expect(book.length, greaterThan(200));
       expect(card, contains('限制级'));
-      expect(book, contains('限制级'));
+      expect(book, contains('允许直白写'));
       expect(card, contains('硬加'));
       expect(book, contains('硬塞'));
       expect(builtinPersona('something-else', false), isNull);

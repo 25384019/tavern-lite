@@ -69,6 +69,9 @@ class _TavernStudioPageState extends ConsumerState<TavernStudioPage> {
   var _saving = false;
   var _loaded = false;
 
+  /// 绑卡时读到的原卡字段：AI 生成时作为「原卡内容」整段给模型，防止写跑题。
+  Map<String, Object?>? _cardData;
+
   /// 「我想要的角色」：进不了卡，但每次 AI 生成都跟着走（`StudioDraft.idea`）。
   final _ideaController = TextEditingController();
 
@@ -112,11 +115,11 @@ class _TavernStudioPageState extends ConsumerState<TavernStudioPage> {
           tavern,
           widget.characterId!,
         );
-        // ???????????????????????????
+        // 原卡的原文留着：AI 生成时整段喂进去，免得写出来的东西和这张卡对不上。
+        final cardData = await tavern.characterFields(widget.characterId!);
+        _cardData = cardData;
         draft = fromCard.isEmpty
-            ? studioDraftFromCardData(
-                await tavern.characterFields(widget.characterId!),
-              )
+            ? studioDraftFromCardData(cardData)
             : fromCard;
       } else {
         draft = await (await ref.read(studioDraftStoreProvider.future)).read();
@@ -149,8 +152,13 @@ class _TavernStudioPageState extends ConsumerState<TavernStudioPage> {
   }
 
   Future<void> _open(String moduleId) async {
-    await Navigator.of(context)
-        .push(TavernStudioModulePage.route(_draft, moduleId));
+    await Navigator.of(context).push(
+      TavernStudioModulePage.route(
+        _draft,
+        moduleId,
+        sourceCard: _cardData,
+      ),
+    );
     if (!mounted) return;
     setState(() {});
     unawaited(_autosave());
@@ -788,16 +796,26 @@ class TavernStudioModulePage extends ConsumerStatefulWidget {
     super.key,
     required this.draft,
     required this.moduleId,
+    this.sourceCard,
   });
 
   final StudioDraft draft;
   final String moduleId;
 
-  static Route<void> route(StudioDraft draft, String moduleId) =>
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            TavernStudioModulePage(draft: draft, moduleId: moduleId),
-      );
+  /// 绑卡时原卡的正文：字段级 ✨ 也要看得见它，否则写出来和这张卡对不上。
+  final Map<String, Object?>? sourceCard;
+
+  static Route<void> route(
+    StudioDraft draft,
+    String moduleId, {
+    Map<String, Object?>? sourceCard,
+  }) => MaterialPageRoute<void>(
+    builder: (_) => TavernStudioModulePage(
+      draft: draft,
+      moduleId: moduleId,
+      sourceCard: sourceCard,
+    ),
+  );
 
   @override
   ConsumerState<TavernStudioModulePage> createState() =>
@@ -972,6 +990,8 @@ class _TavernStudioModulePageState
           field: field,
           action: action,
           instruction: instruction,
+          idea: widget.draft.idea,
+          sourceCard: widget.sourceCard,
           english: AppLocale.isEnglish,
           label: (key) => studioFieldLabel(widget.moduleId, key, context.l10n),
         ),

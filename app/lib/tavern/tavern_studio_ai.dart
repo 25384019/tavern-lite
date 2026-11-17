@@ -238,6 +238,25 @@ String _short(String text, int limit) {
   return flat.length <= limit ? flat : '${flat.substring(0, limit)}…';
 }
 
+/// 原卡的正文，给模型当依据。只要有内容的字段，各截一段，别把整个卡塞进去。
+String _sourceCard(Map<String, Object?> card, bool english) {
+  final parts = <String>[];
+  void add(String key, String zh, String en, int limit) {
+    final value = card[key];
+    if (value is! String) return;
+    final text = value.trim();
+    if (text.isEmpty) return;
+    parts.add('- ${english ? en : zh}：${_short(text, limit)}');
+  }
+
+  add('name', '名字', 'Name', 40);
+  add('description', '描述', 'Description', 600);
+  add('personality', '性格', 'Personality', 400);
+  add('scenario', '场景', 'Scenario', 300);
+  add('first_mes', '开场', 'First message', 300);
+  return parts.join('\n');
+}
+
 /// 提示本体。[label] 把字段 key 变成人话（调用方给 l10n 的字段名）。
 ///
 /// 关键一条：**提示里必须出现程序要的那个英文键**（`identity` 而不是只有「角色身份」），
@@ -248,6 +267,8 @@ List<Map<String, Object?>> studioAiMessages({
   String? field,
   required StudioAiAction action,
   String instruction = '',
+  String idea = '',
+  Map<String, Object?>? sourceCard,
   bool english = false,
   required String Function(String key) label,
   int budget = 160,
@@ -277,10 +298,19 @@ List<Map<String, Object?>> studioAiMessages({
   ask.writeln(english ? 'Module: $moduleName' : '模块：$moduleName');
   // 「我想要的角色」：进不了卡，但每一格都要照它写。制卡页那句创意、市场里抄来的
   // 一段设定都放在这里（`StudioDraft.idea`，随草稿存盘）。
-  final wish = draft.idea.trim();
+  // 界面上还有一块同名输入框，改了立刻以它为准。
+  final wish = idea.trim().isNotEmpty ? idea.trim() : draft.idea.trim();
   if (wish.isNotEmpty) {
     ask.writeln(english ? '\nThe character I want:' : '\n我想要的角色：');
     ask.writeln(_short(wish, 800));
+  }
+  // 绑卡时把原卡正文整段带上：不然 AI 只看到模块摘要，写出来和这张卡对不上。
+  if (sourceCard != null) {
+    final card = _sourceCard(sourceCard, english);
+    if (card.isNotEmpty) {
+      ask.writeln(english ? '\nThe original card (keep it consistent, do not contradict it):' : '\n原卡内容（要跟它一致，不许冲突）：');
+      ask.writeln(card);
+    }
   }
   final summary = _summary(draft, english);
   if (summary.isNotEmpty) ask.writeln(summary);
@@ -356,6 +386,8 @@ Map<String, Object?> studioAiBody({
   String? field,
   required StudioAiAction action,
   String instruction = '',
+  String idea = '',
+  Map<String, Object?>? sourceCard,
   bool english = false,
   required String Function(String key) label,
   int budget = 160,
@@ -366,6 +398,8 @@ Map<String, Object?> studioAiBody({
     field: field,
     action: action,
     instruction: instruction,
+    idea: idea,
+    sourceCard: sourceCard,
     english: english,
     label: label,
     budget: budget,

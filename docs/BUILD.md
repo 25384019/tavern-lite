@@ -27,8 +27,23 @@
    # Windows: flutter_windows_3.50.0-stable.zip；Linux: flutter_linux_3.50.0-stable.tar.xz
    ```
    本机解压到 `E:\dshgo\sdk\flutter`，`flutter --version` 确认 3.50.0 / Dart 3.14.0。
+
+   > **⚠️ 本机的 `flutter` 命令指向的是旧 SDK**：`C:\tools\flutter` 是 Flutter 3.44.8 / Dart **3.12.2**，
+   > 低于 `pubspec.yaml` 里的 `sdk: ^3.13.5`，直接 `flutter build` 会报「requires SDK version ^3.13.5,
+   > current 3.12.2」。**不要**去降低约束（那只是把症状按下去，还会顺手改写 `pubspec.lock` 的解析结果）。
+   >
+   > 一律用绝对路径调正牌 SDK：
+   > ```powershell
+   > $env:FLUTTER_STORAGE_BASE_URL='https://storage.flutter-io.cn'
+   > $env:JAVA_HOME='C:\Program Files\Java\jdk-17'
+   > & "E:\dshgo\sdk\flutter\bin\flutter.bat" build apk --release --split-per-abi
+   > ```
+   > 或者直接用仓库里的 `tool\build.ps1`（下面第二节末尾）。
 2. **Android SDK**：cmdline-tools + `platform-tools`、`platforms;android-36`、
    `build-tools;36.0.0`。
+3. **一条命令出包**：`pwsh -File tool\build.ps1`（先 analyze + 单测，再出三个分架构包
+   和通用包；SDK 路径在脚本里写死，不吃 PATH）。
+
 3. **JDK 17**（`JAVA_HOME` 指向它；Android Studio 自带的 JBR 25 也能跑，但 AGP 官方
    支持矩阵以 17 为准）。
 4. **NDK 28.2.13676358**：`sqlite3 3.9.1` 走 native assets（`hooks` +
