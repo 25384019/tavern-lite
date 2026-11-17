@@ -1,8 +1,8 @@
-name: dsh_app
+﻿name: dsh_app
 description: "Tavern Lite — DSH Go 酒馆模块的独立 Android 应用"
 publish_to: 'none'
 
-version: 1.0.16+1
+version: 1.0.16+4002
 
 environment:
   sdk: ^3.13.5
