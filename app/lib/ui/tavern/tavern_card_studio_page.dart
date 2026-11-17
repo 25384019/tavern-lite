@@ -159,10 +159,13 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
     _rawScroll.jumpTo(_rawScroll.position.maxScrollExtent);
   }
 
-  /// 选中的人格层：从资源库里那本预设现取。取不到就当没选。
+  /// 选中的人格层：内置的两份直接给文本，其余从资源库里那本预设现取。
   Future<String?> _personaText() async {
     final id = _personaIdNow;
     if (id == null) return null;
+    if (isBuiltinPersona(id)) {
+      return builtinPersona(id, AppLocale.isEnglish);
+    }
     try {
       final preset = await ref.read(tavernProvider).preset(id);
       return preset == null ? null : presetPersonaText(preset.raw);
@@ -175,6 +178,7 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
   String? get _personaName {
     final id = _personaId;
     if (id == null) return null;
+    if (id == builtinCardPersonaId) return context.l10n.personaBuiltinCard;
     final presets = ref.watch(tavernPresetsProvider).value ?? const [];
     for (final preset in presets) {
       if (preset.id == id) return preset.name;
@@ -206,6 +210,23 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
                     12,
                   ),
                   children: [
+                    SettingsTile(
+                      key: const ValueKey('tavern-card-persona-builtin'),
+                      icon: AppIcons.article,
+                      tinted: false,
+                      title: l10n.personaBuiltinCard,
+                      subtitle: l10n.personaBuiltinHint,
+                      value: _personaIdNow == builtinCardPersonaId
+                          ? Icon(
+                              AppIcons.selected,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                          : null,
+                      chevron: false,
+                      onTap: () =>
+                          Navigator.of(sheet).pop(builtinCardPersonaId),
+                    ),
                     SettingsTile(
                       key: const ValueKey('tavern-card-persona-none'),
                       icon: AppIcons.dropdown,

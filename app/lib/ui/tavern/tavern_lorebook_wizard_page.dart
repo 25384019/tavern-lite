@@ -106,6 +106,10 @@ class _TavernLorebookWizardPageState
   Future<String?> _personaText() async {
     final id = _personaIdNow;
     if (id == null) return null;
+    // 内置的两份（写卡用 / 写书用）不读预设。
+    if (isBuiltinPersona(id)) {
+      return builtinPersona(id, AppLocale.isEnglish);
+    }
     try {
       final preset = await ref.read(tavernProvider).preset(id);
       return preset == null ? null : presetPersonaText(preset.raw);
@@ -118,6 +122,7 @@ class _TavernLorebookWizardPageState
   String? get _personaName {
     final id = _personaId;
     if (id == null) return null;
+    if (id == builtinBookPersonaId) return context.l10n.personaBuiltinBook;
     final presets = ref.watch(tavernPresetsProvider).value ?? const [];
     for (final preset in presets) {
       if (preset.id == id) return preset.name;
@@ -213,6 +218,23 @@ class _TavernLorebookWizardPageState
                     12,
                   ),
                   children: [
+                    SettingsTile(
+                      key: const ValueKey('lorebook-persona-builtin'),
+                      icon: AppIcons.lorebook,
+                      tinted: false,
+                      title: l10n.personaBuiltinBook,
+                      subtitle: l10n.personaBuiltinHint,
+                      value: _personaIdNow == builtinBookPersonaId
+                          ? Icon(
+                              AppIcons.selected,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            )
+                          : null,
+                      chevron: false,
+                      onTap: () =>
+                          Navigator.of(sheet).pop(builtinBookPersonaId),
+                    ),
                     SettingsTile(
                       key: const ValueKey('lorebook-persona-none'),
                       icon: AppIcons.dropdown,

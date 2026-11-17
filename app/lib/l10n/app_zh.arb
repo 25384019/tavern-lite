@@ -12770,6 +12770,9 @@
   "lorebookWizardPersona": "人格层",
   "lorebookWizardPersonaNote": "从资源库 › 预设 里挑一本，把它的系统提示垫在这次生成前面；不影响你已有的对话。",
   "lorebookWizardPersonaNone": "不使用",
+  "personaBuiltinCard": "内置 · 写卡用",
+  "personaBuiltinBook": "内置 · 写书用",
+  "personaBuiltinHint": "允许限制级，但不硬加；不用导入预设也能用",
   "lorebookWizardBatchMissed": "{count} 批没写出来，其余先存着",
   "@lorebookWizardBatchMissed": {
     "placeholders": {

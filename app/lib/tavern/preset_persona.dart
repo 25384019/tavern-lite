@@ -3,6 +3,64 @@
 // 只取真有人写内容的系统提示（main / nsfw / 越狱 / 文风这类），跳过 marker
 // （对话示例、世界书前后、聊天历史这些占位），顺序照预设自己的 prompt_order。
 // 一个都取不到就返回 null，调用方照原样发——不因为选了个空预设就发不出去。
+//
+// 两个坑（2026-11-17 对着 15 本真实世界书和 ST 预设的结构核过）：
+//   1. 预设里的 `{{char}}` / `{{user}}` / `{{original}}` 是聊天时的宏，写卡请求里没有值，
+//      原样发过去模型会以为自己在扮演（而不是在写卡）。要换成中性说法，或直接删。
+//   2. 破甲/文风类预设动辄几千字，全塞进去会把 token 预算吃光，JSON 直接被挤掉。
+//      所以有长度上限，超了从末尾裁，优先保留前面（授权、口吻通常在最前）。
+
+/// 内置人格层的两个 id（存进设置里的字符串，不是预设 id，所以带前缀）。
+const builtinCardPersonaId = 'builtin:card';
+const builtinBookPersonaId = 'builtin:book';
+
+/// 拼出来的人格层最多这么多字；超了从末尾裁。
+const personaTextLimit = 3000;
+
+/// 内置的「写卡」人格：授权说得清楚，但不逼着写——卡本身不是成人向就不硬加。
+const _builtinCardZh = '''
+你是一位角色设定作者，专门把一句灵感写成能直接用的酒馆角色卡。
+1. 内容尺度：这张卡允许限制级——性、身体、欲望都可以直白写，露骨用词不用回避，别用隐喻把话说软。但如果这张卡本身不是成人向，就不要硬加性内容，顺着它自己的方向写。
+2. 每一格都要具体到能看见：外貌写体型、皮肤、气味、穿衣；性格写到能预测这个人在什么场合会怎么反应；场景写到温度、声音、光线。
+3. 台词要有辨识度：口头禅、句子长短、语气词。示例对话要真像这个人在说话，不是把旁白改成对话。
+4. 允许写复杂的欲望和边缘关系，但角色必须自洽：欲望有来处，不能只剩器官。
+5. 你只写这张卡：不替玩家说话，不写正文剧情，不解释你在做什么，除了要求的 JSON 不输出别的东西。''';
+
+const _builtinCardEn = '''
+You write character cards for a role-play app. Take one line of inspiration and turn it into a card someone can use as-is.
+1. Rating: this card may be explicit — sex, bodies and desire can be written plainly, with the words readers actually use. But if the card itself is not adult, do not force it; follow where it points.
+2. Every field must be concrete: bodies you can see (build, skin, smell, clothes), a personality you can predict a reaction from, a scene with temperature, sound and light.
+3. Dialogue must be recognisable: catchphrases, sentence length, particles. Example dialogue has to sound like that person, not narration turned into speech.
+4. Complex desire and messy relationships are fine, but the character has to hold together: desire has a history, not just organs.
+5. Write the card only: never speak for the player, no story prose, no explanation — nothing but the requested JSON.''';
+
+/// 内置的「写世界书」人格：按类型分写法，允许成人向，但每条要能触发、要自足。
+const _builtinBookZh = '''
+你是一位设定集作者，专门把设定写成「聊到就会触发」的世界书条目。
+1. 内容尺度：允许直白写性、身体、体液与欲望，用读者会用的词，不要用隐喻绕开。但这个世界观本身不是成人向时，不要硬塞。
+2. 每条自足：不看别的条目也能读懂；写清「是什么 / 谁在用 / 怎么表现出来」，不写空话。
+3. 按类型写：文风类写「怎么写」（视角、句子、节奏、感官、衣物与肉体一起描），不写「发生了什么」；破甲类写成命令（不许干什么 + 该干什么），短而硬；描写词条写具体情境和身体反应，不写概括。
+4. 常驻只留给每回合都必须在场的东西；其余靠关键词触发，关键词要覆盖别称、俗称、玩家真会打出来的词。
+5. 你只写这本世界书的条目：不写正文，不扮演任何角色，不解释。''';
+
+const _builtinBookEn = '''
+You write world book entries — the lore a chat pulls in when it touches on something.
+1. Rating: sex, bodies, fluids and desire may be written plainly, in the words readers use, with no metaphor to soften it. But if this world is not adult, do not force it in.
+2. Every entry stands alone: readable without the others, saying what it is, who uses it, and how it shows up.
+3. Write by kind: style entries say how to write (POV, sentences, rhythm, senses, clothes and flesh together) rather than what happens; guardrail entries are short orders (what never to do, what to do instead); lexicon entries describe concrete scenes and body reactions, never summaries.
+4. Constant is only for what must be present every turn; everything else triggers on keys that cover nicknames, slang and the words a player would actually type.
+5. Write the entries only: no prose, no role-play, no explanation.''';
+
+/// 内置人格：按 id 和语言给一段可用的文本；不是内置 id 就 null。
+String? builtinPersona(String id, bool english) => switch (id) {
+  builtinCardPersonaId => clipPersona(english ? _builtinCardEn : _builtinCardZh),
+  builtinBookPersonaId => clipPersona(english ? _builtinBookEn : _builtinBookZh),
+  _ => null,
+};
+
+/// 这串 id 是不是内置人格。
+bool isBuiltinPersona(String? id) =>
+    id == builtinCardPersonaId || id == builtinBookPersonaId;
 
 /// 预设里能当人格层的那几条，按预设的顺序拼成一段；没有就 null。
 String? presetPersonaText(Map<String, Object?> raw) {
@@ -27,7 +85,40 @@ String? presetPersonaText(Map<String, Object?> raw) {
       parts.add(text);
     }
   }
-  return parts.isEmpty ? null : parts.join('\n\n');
+  return parts.isEmpty ? null : clipPersona(sanitizePersona(parts.join('\n\n')));
+}
+
+/// 把聊天用的宏换成写卡/写书时讲得通的说法。
+///
+/// `{{char}}` → 「角色」、`{{user}}` → 「玩家」，`{{original}}` / `{{persona}}` 删掉；
+/// 其余不认识的 `{{...}}` 一并删——留一个没值的占位符，模型就会原样抄进卡里，
+/// 或者干脆开始扮演（真机踩过）。
+String sanitizePersona(String text) {
+  var out = text;
+  out = out.replaceAll(RegExp(r'\{\{\s*char\s*\}\}', caseSensitive: false), '角色');
+  out = out.replaceAll(RegExp(r'\{\{\s*user\s*\}\}', caseSensitive: false), '玩家');
+  out = out.replaceAll(
+    RegExp(r'\{\{\s*(original|persona)\s*\}\}', caseSensitive: false),
+    '',
+  );
+  out = out.replaceAll(RegExp(r'\{\{[\s\S]{0,80}?\}\}'), '');
+  out = out.replaceAll(RegExp(r'\{%[\s\S]{0,80}?%\}'), '');
+  // 删完可能留下连续空行/行尾空格。
+  out = out
+      .split('\n')
+      .map((line) => line.trimRight())
+      .join('\n')
+      .replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  return out.trim();
+}
+
+/// 太长就从末尾裁：授权、口吻通常在最前面，先保它们。
+String clipPersona(String text) {
+  if (text.length <= personaTextLimit) return text;
+  var cut = text.substring(0, personaTextLimit);
+  final lastBreak = cut.lastIndexOf('\n');
+  if (lastBreak > personaTextLimit ~/ 2) cut = cut.substring(0, lastBreak);
+  return '${cut.trimRight()}\n…（人格层过长，后面截掉了）';
 }
 
 /// 预设的提示顺序：主聊天那组（character_id 100001）优先，其次第一组，

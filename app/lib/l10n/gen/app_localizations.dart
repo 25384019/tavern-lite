@@ -38464,6 +38464,24 @@ abstract class L10n {
   /// **'不使用'**
   String get lorebookWizardPersonaNone;
 
+  /// No description provided for @personaBuiltinCard.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置 · 写卡用'**
+  String get personaBuiltinCard;
+
+  /// No description provided for @personaBuiltinBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置 · 写书用'**
+  String get personaBuiltinBook;
+
+  /// No description provided for @personaBuiltinHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许限制级，但不硬加；不用导入预设也能用'**
+  String get personaBuiltinHint;
+
   /// No description provided for @lorebookWizardBatchMissed.
   ///
   /// In zh, this message translates to:

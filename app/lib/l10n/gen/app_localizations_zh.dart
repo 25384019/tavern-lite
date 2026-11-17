@@ -21227,6 +21227,15 @@ class L10nZh extends L10n {
   String get lorebookWizardPersonaNone => '不使用';
 
   @override
+  String get personaBuiltinCard => '内置 · 写卡用';
+
+  @override
+  String get personaBuiltinBook => '内置 · 写书用';
+
+  @override
+  String get personaBuiltinHint => '允许限制级，但不硬加；不用导入预设也能用';
+
+  @override
   String lorebookWizardBatchMissed(int count) {
     return '$count 批没写出来，其余先存着';
   }

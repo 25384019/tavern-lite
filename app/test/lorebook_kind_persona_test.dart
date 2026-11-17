@@ -59,6 +59,40 @@ void main() {
       expect(withPersona(const [{'role': 'user', 'content': 'x'}], null), hasLength(1));
     });
 
+    test('聊天宏换成中性说法，不认识的宏删掉', () {
+      // 预设原话是「写 {{char}} 的下一句」——在写卡请求里模型会以为自己在扮演。
+      expect(
+        sanitizePersona('写 {{char}} 的下一句，别替 {{user}} 决定'),
+        '写 角色 的下一句，别替 玩家 决定',
+      );
+      final cleaned = sanitizePersona('前缀 {{random::甲::乙}} 后缀');
+      expect(cleaned, isNot(contains('{{')));
+      expect(cleaned, contains('前缀'));
+      expect(cleaned, contains('后缀'));
+    });
+
+    test('太长的预设从末尾裁，前面的授权留住', () {
+      final long = '授权：允许写。\n' * 800;
+      final clipped = clipPersona(long);
+      expect(clipped.length, lessThanOrEqualTo(personaTextLimit + 40));
+      expect(clipped, contains('授权：允许写。'));
+      expect(clipped, contains('截掉'));
+    });
+
+    test('内置两份都有内容，且都写着「不强迫」', () {
+      final card = builtinPersona(builtinCardPersonaId, false)!;
+      final book = builtinPersona(builtinBookPersonaId, false)!;
+      expect(card.length, greaterThan(200));
+      expect(book.length, greaterThan(200));
+      expect(card, contains('限制级'));
+      expect(book, contains('限制级'));
+      expect(card, contains('硬加'));
+      expect(book, contains('硬塞'));
+      expect(builtinPersona('something-else', false), isNull);
+      expect(isBuiltinPersona(builtinCardPersonaId), isTrue);
+      expect(isBuiltinPersona('abc'), isFalse);
+    });
+
     test('垫在最前面，任务提示还在最后', () {
       final messages = withPersona([
         {'role': 'system', 'content': '只输出 JSON'},
