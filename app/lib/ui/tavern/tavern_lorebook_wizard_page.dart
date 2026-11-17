@@ -76,9 +76,12 @@ class _TavernLorebookWizardPageState
   );
 
   /// 跑一次请求，返回模型原文；失败返回 null 并摆出错误。
+  ///
+  /// 默认给 4000（和 AI 制卡同一个数）：这里没有「一次只写一小段」的步骤，
+  /// 蓝图和规划都是整段 JSON，默认值给小了就会被截断（详见 [lorebookPlanTokens]）。
   Future<String?> _ask(
     List<Map<String, Object?>> messages, {
-    int maxTokens = 1400,
+    int maxTokens = 4000,
   }) async {
     final client = ref.read(tavernModelClientProvider);
     final config = ref.read(tavernModelConfigProvider);
@@ -289,6 +292,7 @@ class _TavernLorebookWizardPageState
           persona: persona,
           scale: scaleName,
         ),
+        maxTokens: lorebookBlueprintTokens,
       );
       if (reply == null || !mounted) return;
       final blueprint = lorebookBlueprintParse(reply);
@@ -318,11 +322,17 @@ class _TavernLorebookWizardPageState
           kind: _kind,
           persona: persona,
         ),
+        maxTokens: lorebookPlanTokens(_target),
       );
       if (reply == null || !mounted) return;
       final plan = lorebookPlanParse(reply);
       if (plan.isEmpty) {
-        setState(() => _error = context.l10n.studioAiNothing);
+        // 到这一步还空，多半是请求层失败或者 JSON 真救不回来：说清楚，别只报「没生成」。
+        setState(
+          () => _error = reply.trim().isEmpty
+              ? context.l10n.studioAiNothing
+              : context.l10n.lorebookWizardPlanEmpty,
+        );
         return;
       }
       setState(() {

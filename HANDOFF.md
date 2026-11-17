@@ -559,7 +559,27 @@ flutter test integration_test/app_card_studio_test.dart -d <device>
 - 验证：`test/studio_idea_prompt_test.dart` 4 例（写了进提示 / 没写不占地方 /
   制卡页那句创意同一个字段 / 整模块生成也带着）。
 
-### 9.6 这一轮没验的
+### 9.6 工坊卡在第二步：计划被 1400 截断（2026-11-17 早）
+
+现象：走到第二步「规划条目」就报「没生成出来」，永远进不到写正文。
+
+病灶不在解析，在**请求的 token 上限**：
+
+- `_ask` 默认 1400，而 `_makeBlueprint` / `_makePlan` 两个调用都没显式传值；
+- 计划要一次列完所有条目（小 5 / 中 10 / 大 18 条，每条带标题、类型、理由），
+  中文 JSON 大档稳超 1400 → 回复被截断 → JSON 不合法 → 解析为空 → 界面只会说
+  「没生成出来」。写正文那步走 `batchTokens`（2400–3600），所以卡点只出现在计划。
+
+修法：
+
+- `_ask` 默认 1400 → **4000**（和 AI 制卡同一个数），蓝图跟着受益；
+- 计划显式给 `lorebookPlanTokens(target)` = `(900 + target*180).clamp(1600, 4000)`，
+  条数越多给得越多，不再依赖默认值「刚好够」；蓝图显式 `lorebookBlueprintTokens = 2200`；
+- 计划解析为空时换一句更准的话（`lorebookWizardPlanEmpty`）：
+  「回来了内容，但不是能用的计划（多半被截断了）」，和请求失败区分开；
+- 单测断言 `lorebookPlanTokens(18) == 4000`、随条数单调增、蓝图 > 1400。
+
+### 9.7 这一轮没验的
 
 - **没在设备上跑过**：本机 Flutter 3.44.8 / Dart 3.12.2，而 `app/pubspec.yaml` 要
   `sdk: ^3.13.5`，`flutter test` 在解析依赖那步就退出了。`dart analyze` 能用现有的

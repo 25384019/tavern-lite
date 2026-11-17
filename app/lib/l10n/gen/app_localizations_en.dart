@@ -23361,6 +23361,10 @@ class L10nEn extends L10n {
   }
 
   @override
+  String get lorebookWizardPlanEmpty =>
+      'The reply came back, but not as a usable plan (likely cut off). Try again, or pick a smaller scale.';
+
+  @override
   String get lorebookWizardWrite => 'Write the entries';
 
   @override

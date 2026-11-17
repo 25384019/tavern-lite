@@ -38350,6 +38350,12 @@ abstract class L10n {
   /// **'大约 {count} 条'**
   String lorebookWizardPlanCount(int count);
 
+  /// No description provided for @lorebookWizardPlanEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'回来了内容，但不是能用的计划（多半被截断了）。再点一次，或把篇幅调小一档。'**
+  String get lorebookWizardPlanEmpty;
+
   /// No description provided for @lorebookWizardWrite.
   ///
   /// In zh, this message translates to:

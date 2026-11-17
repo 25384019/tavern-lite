@@ -829,6 +829,7 @@
   "lorebookWizardMakePlan": "Plan the entries",
   "lorebookWizardPlanCount": "about {count} entries",
   "@lorebookWizardPlanCount": {"placeholders": {"count": {"type": "int"}}},
+  "lorebookWizardPlanEmpty": "The reply came back, but not as a usable plan (likely cut off). Try again, or pick a smaller scale.",
   "lorebookWizardWrite": "Write the entries",
   "lorebookWizardWriteHint": "Up to {count} at a time",
   "@lorebookWizardWriteHint": {"placeholders": {"count": {"type": "int"}}},

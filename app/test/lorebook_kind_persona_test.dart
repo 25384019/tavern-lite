@@ -98,6 +98,16 @@ void main() {
       expect(LorebookKind.guardrail.batchSize, lessThanOrEqualTo(3));
     });
 
+    test('规划的 token 随条数涨，大档不再吃默认的 1400', () {
+      // 2026-11-17 真机：大档 18 条被 1400 截断，计划整份解析不出来。
+      expect(lorebookPlanTokens(18), greaterThan(1400));
+      expect(lorebookPlanTokens(18), 4000);
+      expect(lorebookPlanTokens(5), greaterThanOrEqualTo(1600));
+      expect(lorebookPlanTokens(1), 1600);
+      expect(lorebookPlanTokens(10), greaterThan(lorebookPlanTokens(5)));
+      expect(lorebookBlueprintTokens, greaterThan(1400));
+    });
+
     test('人格层也进提示', () {
       final messages = lorebookPlanMessages(
         blueprint: _blueprint,

@@ -21163,6 +21163,9 @@ class L10nZh extends L10n {
   }
 
   @override
+  String get lorebookWizardPlanEmpty => '回来了内容，但不是能用的计划（多半被截断了）。再点一次，或把篇幅调小一档。';
+
+  @override
   String get lorebookWizardWrite => '写正文';
 
   @override
