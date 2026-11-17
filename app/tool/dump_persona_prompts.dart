@@ -66,6 +66,9 @@ void main(List<String> args) {
     say('## ${item.name}');
     blank();
     say('- 人格层：${item.persona?.length ?? 0} 字');
+    if (item.dropped.isNotEmpty) {
+      say('- 丢弃：${item.dropped.map((one) => one.toString()).join('；')}');
+    }
     say('- 写卡 messages：${_chars(card)} 字 / ${card.length} 条');
     say('- 写书 messages：${_chars(book)} 字 / ${book.length} 条');
     blank();
@@ -99,13 +102,30 @@ void main(List<String> args) {
   }
 }
 
-List<({String name, String? persona})> _cases(Map<String, Object?>? preset) => [
-  (name: '不套人格', persona: null),
-  (name: '内置 · 写卡用', persona: builtinPersona(builtinCardPersonaId, false)),
-  (name: '内置 · 写书用', persona: builtinPersona(builtinBookPersonaId, false)),
-  if (preset != null)
-    (name: '我的预设（净化后）', persona: presetPersonaText(preset)),
-];
+List<({String name, String? persona, List<PersonaDropped> dropped})> _cases(
+  Map<String, Object?>? preset,
+) {
+  final built = preset == null ? null : presetPersona(preset);
+  return [
+    (name: '不套人格', persona: null, dropped: const <PersonaDropped>[]),
+    (
+      name: '内置 · 写卡用',
+      persona: builtinPersona(builtinCardPersonaId, false),
+      dropped: const <PersonaDropped>[],
+    ),
+    (
+      name: '内置 · 写书用',
+      persona: builtinPersona(builtinBookPersonaId, false),
+      dropped: const <PersonaDropped>[],
+    ),
+    if (built != null)
+      (
+        name: '我的预设（按内容筛过）',
+        persona: built.text,
+        dropped: built.dropped,
+      ),
+  ];
+}
 
 int _chars(List<Map<String, Object?>> messages) => messages.fold<int>(
   0,

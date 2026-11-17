@@ -54,6 +54,9 @@ class _TavernLorebookWizardPageState
   /// 生成时用：那会儿不在 build 里，不能 watch。
   String? get _personaIdNow => ref.read(tavernSettingsProvider).bookPersonaId;
 
+  /// 这一次人格层被筛掉的条目（聊天指令），界面上要明示，不许静默。
+  List<PersonaDropped> _personaDropped = const [];
+
   LorebookBlueprint? _blueprint;
   List<LorebookPlanEntry> _plan = const [];
   final _picked = <String>{};
@@ -102,20 +105,45 @@ class _TavernLorebookWizardPageState
   }
 
   /// 选中的人格层：从资源库那本预设现取（预设改了，下次生成就跟着变）。
-  /// 取不到就当没选，不拦着生成。
+  ///
+  /// 预设里「以角色身份回下一句」这类聊天指令会被筛掉（见 [presetPersona]）；
+  /// 筛掉了哪几条记在 [_personaDropped]，人格层那一行会写出来。
   Future<String?> _personaText() async {
     final id = _personaIdNow;
-    if (id == null) return null;
+    if (id == null) {
+      _noteDropped(const []);
+      return null;
+    }
     // 内置的两份（写卡用 / 写书用）不读预设。
     if (isBuiltinPersona(id)) {
+      _noteDropped(const []);
       return builtinPersona(id, AppLocale.isEnglish);
     }
     try {
       final preset = await ref.read(tavernProvider).preset(id);
-      return preset == null ? null : presetPersonaText(preset.raw);
+      if (preset == null) {
+        _noteDropped(const []);
+        return null;
+      }
+      final layer = presetPersona(preset.raw);
+      _noteDropped(layer.dropped);
+      return layer.text;
     } on Object {
+      _noteDropped(const []);
       return null;
     }
+  }
+
+  void _noteDropped(List<PersonaDropped> dropped) {
+    if (!mounted) {
+      _personaDropped = dropped;
+      return;
+    }
+    if (_personaDropped.length == dropped.length &&
+        _personaDropped.every(dropped.contains)) {
+      return;
+    }
+    setState(() => _personaDropped = dropped);
   }
 
   /// 当前人格层的名字（没选、或那本预设被删了 = null）。
@@ -597,7 +625,11 @@ class _TavernLorebookWizardPageState
                   icon: AppIcons.dropdown,
                   tinted: false,
                   title: l10n.lorebookWizardPersona,
-                  subtitle: _personaName ?? l10n.lorebookWizardPersonaNone,
+                  subtitle: [
+                    _personaName ?? l10n.lorebookWizardPersonaNone,
+                    if (_personaDropped.isNotEmpty)
+                      l10n.personaDropped(_personaDropped.length),
+                  ].join(' · '),
                   onTap: _busy ? null : () => unawaited(_pickPersona()),
                 ),
                 SettingsTile(

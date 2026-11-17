@@ -134,6 +134,9 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
   final _bookBrief = TextEditingController();
   String? _bookProgress;
 
+  /// 这一次人格层被筛掉的条目（聊天指令），界面上要明示，不许静默。
+  List<PersonaDropped> _personaDropped = const [];
+
   @override
   void dispose() {
     _cancel?.cancel();
@@ -160,18 +163,44 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
   }
 
   /// 选中的人格层：内置的两份直接给文本，其余从资源库里那本预设现取。
+  ///
+  /// 预设里「以角色身份回下一句」这类聊天指令会被筛掉（见 [presetPersona]），
+  /// 筛掉了哪几条放进 [_personaDropped] 给界面显示。
   Future<String?> _personaText() async {
     final id = _personaIdNow;
-    if (id == null) return null;
+    if (id == null) {
+      _setDropped(const []);
+      return null;
+    }
     if (isBuiltinPersona(id)) {
+      _setDropped(const []);
       return builtinPersona(id, AppLocale.isEnglish);
     }
     try {
       final preset = await ref.read(tavernProvider).preset(id);
-      return preset == null ? null : presetPersonaText(preset.raw);
+      if (preset == null) {
+        _setDropped(const []);
+        return null;
+      }
+      final layer = presetPersona(preset.raw);
+      _setDropped(layer.dropped);
+      return layer.text;
     } on Object {
+      _setDropped(const []);
       return null;
     }
+  }
+
+  void _setDropped(List<PersonaDropped> dropped) {
+    if (!mounted) {
+      _personaDropped = dropped;
+      return;
+    }
+    if (_personaDropped.length == dropped.length &&
+        _personaDropped.every(dropped.contains)) {
+      return;
+    }
+    setState(() => _personaDropped = dropped);
   }
 
   /// 当前人格层的名字（没选、或那本预设被删了 = null）。
@@ -720,6 +749,18 @@ class _TavernCardStudioPageState extends ConsumerState<TavernCardStudioPage> {
                   subtitle: _personaName ?? l10n.tavernCardStudioPersonaNone,
                   onTap: canGenerate ? () => unawaited(_pickPersona()) : null,
                 ),
+                // 筛掉了哪几条要说出来：静默丢弃会让人以为预设根本没生效。
+                if (_personaDropped.isNotEmpty)
+                  SettingsTile(
+                    key: const ValueKey('tavern-card-studio-persona-dropped'),
+                    icon: AppIcons.info,
+                    tinted: false,
+                    title: l10n.personaDropped(_personaDropped.length),
+                    subtitle: _personaDropped
+                        .map((item) => item.toString())
+                        .join('\n'),
+                    chevron: false,
+                  ),
                 SettingsTile(
                   key: const ValueKey('tavern-card-studio-book'),
                   icon: AppIcons.lorebook,

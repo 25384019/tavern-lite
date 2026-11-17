@@ -23437,6 +23437,11 @@ class L10nEn extends L10n {
       'Explicit is allowed but never forced; works without importing a preset';
 
   @override
+  String personaDropped(int count) {
+    return '$count chat-only prompts skipped';
+  }
+
+  @override
   String lorebookWizardBatchMissed(int count) {
     return '$count batches came back empty; the rest are kept';
   }

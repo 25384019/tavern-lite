@@ -38482,6 +38482,12 @@ abstract class L10n {
   /// **'允许限制级，但不硬加；不用导入预设也能用'**
   String get personaBuiltinHint;
 
+  /// No description provided for @personaDropped.
+  ///
+  /// In zh, this message translates to:
+  /// **'已跳过 {count} 条聊天指令'**
+  String personaDropped(int count);
+
   /// No description provided for @lorebookWizardBatchMissed.
   ///
   /// In zh, this message translates to:

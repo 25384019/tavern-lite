@@ -854,6 +854,8 @@
   "personaBuiltinCard": "Built-in · card writing",
   "personaBuiltinBook": "Built-in · world book writing",
   "personaBuiltinHint": "Explicit is allowed but never forced; works without importing a preset",
+  "personaDropped": "{count} chat-only prompts skipped",
+  "@personaDropped": {"placeholders": {"count": {"type": "int"}}},
   "lorebookWizardBatchMissed": "{count} batches came back empty; the rest are kept",
   "@lorebookWizardBatchMissed": {"placeholders": {"count": {"type": "int"}}},
   "lorebookWizardRules": "Rules",

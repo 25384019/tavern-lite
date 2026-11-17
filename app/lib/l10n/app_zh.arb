@@ -12773,6 +12773,14 @@
   "personaBuiltinCard": "内置 · 写卡用",
   "personaBuiltinBook": "内置 · 写书用",
   "personaBuiltinHint": "允许限制级，但不硬加；不用导入预设也能用",
+  "personaDropped": "已跳过 {count} 条聊天指令",
+  "@personaDropped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lorebookWizardBatchMissed": "{count} 批没写出来，其余先存着",
   "@lorebookWizardBatchMissed": {
     "placeholders": {

@@ -62,9 +62,54 @@ String? builtinPersona(String id, bool english) => switch (id) {
 bool isBuiltinPersona(String? id) =>
     id == builtinCardPersonaId || id == builtinBookPersonaId;
 
+/// 被丢掉的一条，以及为什么丢（界面上要明示，不许静默）。
+class PersonaDropped {
+  const PersonaDropped(this.label, this.reason);
+
+  /// 条目的 identifier，没有就用它的名字。
+  final String label;
+
+  /// 人话理由，直接给用户看。
+  final String reason;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PersonaDropped && other.label == label && other.reason == reason;
+
+  @override
+  int get hashCode => Object.hash(label, reason);
+
+  @override
+  String toString() => '$label（$reason）';
+}
+
+/// 一层拼好的「人格」：能用的那段文本，和这次被筛掉的条目。
+class PersonaLayer {
+  const PersonaLayer({this.text, this.dropped = const <PersonaDropped>[]});
+
+  /// 拼好、净化过、裁过长度的人格文本；一条都没剩就是 null。
+  final String? text;
+  final List<PersonaDropped> dropped;
+
+  bool get isEmpty => (text ?? '').trim().isEmpty;
+
+  static const empty = PersonaLayer();
+}
+
 /// 预设里能当人格层的那几条，按预设的顺序拼成一段；没有就 null。
-String? presetPersonaText(Map<String, Object?> raw) {
+String? presetPersonaText(Map<String, Object?> raw) => presetPersona(raw).text;
+
+/// 从预设里筛出人格层：**按内容筛，不按槽位名筛**。
+///
+/// 聊天预设的 `main` 通常是「以角色身份回下一句、别写玩家的台词」——这跟写卡/写书
+/// 是正面对撞的，留着只会让模型开演。但也不能看见 `main` 就一刀切：有的预设把
+/// 「你是一位角色卡设计师」这种写作身份也写在 main 里，那种必须留。
+///
+/// 判据：命中聊天运行时特征、且没有任何写作身份特征 → 丢；其余全留。
+/// 丢掉的进 [PersonaLayer.dropped]，由界面明示。
+PersonaLayer presetPersona(Map<String, Object?> raw) {
   final parts = <String>[];
+  final dropped = <PersonaDropped>[];
   for (final prompt in _orderedPrompts(raw)) {
     if (prompt['marker'] == true) continue;
     final role = prompt['role'];
@@ -73,19 +118,76 @@ String? presetPersonaText(Map<String, Object?> raw) {
     if (content is! String) continue;
     final text = content.trim();
     if (text.isEmpty || parts.contains(text)) continue;
+    final label = _label(prompt);
+    if (isChatRuntimePrompt(text)) {
+      dropped.add(PersonaDropped(label, '聊天指令，和写作任务冲突'));
+      continue;
+    }
     parts.add(text);
   }
-  if (parts.isEmpty) {
+  if (parts.isEmpty && dropped.isEmpty) {
     // 老预设：三条单独字段。
     for (final key in const ['main_prompt', 'nsfw_prompt', 'jailbreak_prompt']) {
       final value = raw[key];
       if (value is! String) continue;
       final text = value.trim();
       if (text.isEmpty || parts.contains(text)) continue;
+      if (isChatRuntimePrompt(text)) {
+        dropped.add(PersonaDropped(key, '聊天指令，和写作任务冲突'));
+        continue;
+      }
       parts.add(text);
     }
   }
-  return parts.isEmpty ? null : clipPersona(sanitizePersona(parts.join('\n\n')));
+  return PersonaLayer(
+    text: parts.isEmpty
+        ? null
+        : clipPersona(sanitizePersona(parts.join('\n\n'))),
+    dropped: List.unmodifiable(dropped),
+  );
+}
+
+String _label(Map<String, Object?> prompt) {
+  for (final key in const ['identifier', 'name']) {
+    final value = prompt[key];
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+  }
+  return '未命名';
+}
+
+/// 聊天运行时指令的特征（命中「回下一句 / 保持角色 / 别替玩家说话」这类）。
+final _chatRuntime = <RegExp>[
+  RegExp(r'\bnext (reply|message|response)\b', caseSensitive: false),
+  RegExp(r'\b(stay|remain) in character\b', caseSensitive: false),
+  RegExp(r'\brespond as\b|\breply as\b|\bcontinue the (chat|conversation)\b',
+      caseSensitive: false),
+  RegExp(r'\bnever (write|speak)\b[^.\n]{0,30}\b(lines?|dialogue)\b',
+      caseSensitive: false),
+  RegExp(r'替.{0,4}(角色|用户|玩家).{0,6}(回话|说话|发言)'),
+  RegExp(r'以.{0,4}角色.{0,4}身份'),
+  RegExp(r'不要.{0,6}(玩家|用户).{0,6}(台词|发言|说话)'),
+  RegExp(r'(继续|接着).{0,4}(对话|回复|聊天)'),
+  RegExp(r'下一句|下一段回复'),
+];
+
+/// 写作身份的特征：只要有这些，就说明这条是写作向的，哪怕顺带提了角色也不行。
+final _writingHints = <RegExp>[
+  RegExp(r'写卡|角色卡|世界书|条目|人设|设定集|卡片'),
+  RegExp(
+    r'\b(card|world ?book|character (card|sheet)|writer|author|editor)\b',
+    caseSensitive: false,
+  ),
+];
+
+/// 这条内容是不是「聊天运行时指令」。
+///
+/// 命中聊天特征、且没有写作身份特征 → true。带写作身份的一律 false：
+/// 「你是一位角色卡设计师，别替玩家说话」要留，那是写作纪律，不是出戏判断。
+bool isChatRuntimePrompt(String content) {
+  final text = content.trim();
+  if (text.isEmpty) return false;
+  if (_writingHints.any((pattern) => pattern.hasMatch(text))) return false;
+  return _chatRuntime.any((pattern) => pattern.hasMatch(text));
 }
 
 /// 把聊天用的宏换成写卡/写书时讲得通的说法。
